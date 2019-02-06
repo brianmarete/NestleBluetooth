@@ -31,13 +31,18 @@ public class MainActivity extends AppCompatActivity {
                     .show();
         }
 
+        WebView wv = findViewById(R.id.wv_main);
+        wv.loadUrl("file:///android_asset/checklist.html");
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
-
-        WebView wv = findViewById(R.id.wv_main);
-        wv.loadUrl("file:///android_asset/checklist.html");
-
     }
 }
