@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (!mBluetoothAdapter.isEnabled()) {
             Intent discoverableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-            discoverableBtIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+            discoverableBtIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
             startActivityForResult(discoverableBtIntent, REQUEST_DISCOVERABLE_BT);
         }
     }
