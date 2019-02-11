@@ -5,32 +5,50 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.http.SslError;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.webkit.SslErrorHandler;
-import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
-    private static final int REQUEST_DISCOVERABLE_BT = 1;
     public static final String TAG = MainActivity.class.getSimpleName();
+    private static final int REQUEST_DISCOVERABLE_BT = 1;
+
     BluetoothAdapter mBluetoothAdapter;
+    SwipeRefreshLayout mSwipeRefreshLayout;
     WebView mWebView;
+    private String mUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mUrl = "https://nestle.m-vend.com/maintenances";
+        mSwipeRefreshLayout = findViewById(R.id.sr_main);
         mWebView = findViewById(R.id.wv_main);
-        mWebView.getSettings().setDomStorageEnabled(true);
-        mWebView.getSettings().setJavaScriptEnabled(true);
+
+
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                mWebView.loadUrl(mUrl);
+            }
+        });
+
+        mWebView.getSettings().setJavaScriptEnabled(true); // Needed because it is displaying a React app
         mWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                mSwipeRefreshLayout.setRefreshing(false);
+                mUrl = url;
+                super.onPageFinished(view, url);
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView webView, String url) {
                 return false;
@@ -38,10 +56,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                // For some reason the page isn't displayed on the webview because of an ssl error so this is to bypass that
                 handler.proceed();
             }
         });
-        mWebView.loadUrl("https://nestle.m-vend.com/maintenances");
+
+        mWebView.loadUrl(mUrl);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
@@ -56,15 +76,13 @@ public class MainActivity extends AppCompatActivity {
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .show();
         }
-
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        if (!mBluetoothAdapter.isEnabled()) {
+        if (mBluetoothAdapter.getScanMode() != BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
             Intent discoverableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
             discoverableBtIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
             startActivityForResult(discoverableBtIntent, REQUEST_DISCOVERABLE_BT);
